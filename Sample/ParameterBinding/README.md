@@ -1,4 +1,4 @@
-####Supported binding sources:
+Supported binding sources:
 
 - Route values
 - Query string
