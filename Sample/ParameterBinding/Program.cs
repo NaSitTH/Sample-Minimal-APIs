@@ -14,7 +14,7 @@ app.MapGet("/custom-header",
     ([FromHeader(Name = "X-CUSTOM-HEADER")] string customHeader) =>
     $"Custom-Header {customHeader}");
 
-// model binding
+// JSON binding
 app.MapPost("/book", (Book book) => book);
 
 // read request data directly from the request
