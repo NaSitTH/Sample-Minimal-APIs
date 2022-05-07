@@ -13,6 +13,8 @@ var conectrionString = builder.Configuration.GetConnectionString("AppDb");
 
 builder.Services.AddDbContext<SchoolContext>(x => x.UseSqlServer(conectrionString));
 
+builder.Services.AddScoped<IStudentService, StudentService>();
+
 builder.Services.AddScoped<IRepository<Student>, StudentsRepository>();
 
 builder.Services.AddEndpointsApiExplorer();
@@ -43,16 +45,21 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-app.MapGet("/students", async (IRepository<Student> studentsRepo) =>
-    await studentsRepo.GetAll() is List<Student> student
-        ? Results.Ok(new Response<List<Student>>(student))
-        : Results.NotFound())
-    .Produces<Response<List<Student>>>(StatusCodes.Status200OK)
-    .WithTags("Get");
+app.MapGet("/students", async (IStudentService studentsService) =>
+{
+    var response = await studentsService.GetAll();
+    if (response.IsError)
+        return Results.NotFound(response);
 
-app.MapGet("/students/{id}", async (IRepository<Student> studentsRepo, int id) =>
+    return Results.Ok(response);
+
+})
+.Produces<Response<List<Student>>>(StatusCodes.Status200OK)
+.WithTags("Get");
+
+app.MapGet("/students/{id}", async (IStudentService studentsService, int id) =>
     {
-        var response = await studentsRepo.GetById(id);
+        var response = await studentsService.GetById(id);
         if (response.IsError)
             return Results.NotFound(response);
 
@@ -62,9 +69,9 @@ app.MapGet("/students/{id}", async (IRepository<Student> studentsRepo, int id) =
     .Produces(StatusCodes.Status404NotFound)
     .WithTags("Get");
 
-app.MapGet("/students/{id}/details", async (IRepository<Student> studentsRepo, int id) =>
+app.MapGet("/students/{id}/details", async (IStudentService studentService, int id) =>
     {
-        var response = await studentsRepo.GetDetail(id);
+        var response = await studentService.GetDetail(id);
         if (response.IsError)
             return Results.NotFound(response);
 
@@ -74,20 +81,20 @@ app.MapGet("/students/{id}/details", async (IRepository<Student> studentsRepo, i
     .Produces(StatusCodes.Status404NotFound)
     .WithTags("Get");
 
-app.MapPost("/students", async (IRepository<Student> studentsRepo, Student student) =>
+app.MapPost("/students", async (IStudentService studentService, Student student) =>
 {
     if (student is null)
         return Results.BadRequest();
 
-    await studentsRepo.Add(student);
+    await studentService.Add(student);
     return Results.Created($"/students/{student.Id}", student);
 
 }).Produces<Student>(StatusCodes.Status201Created)
     .WithTags("Set");
 
-app.MapPut("/students/{id}", async (IRepository<Student> studentsRepo, Student student, int id) =>
+app.MapPut("/students/{id}", async (IStudentService studentService, Student student, int id) =>
 {
-    var response = await studentsRepo.Update(student, id);
+    var response = await studentService.Update(student, id);
 
     if (response.IsError)
         return Results.NotFound(response);
@@ -97,9 +104,9 @@ app.MapPut("/students/{id}", async (IRepository<Student> studentsRepo, Student s
 }).Produces<Response<Student>>(StatusCodes.Status200OK)
     .WithTags("Set");
 
-app.MapDelete("/students/{id}", async (IRepository<Student> studentsRepo, int id) =>
+app.MapDelete("/students/{id}", async (IStudentService studentService, int id) =>
 {
-    var response = await studentsRepo.Remove(id);
+    var response = await studentService.Remove(id);
 
     if (response.IsError)
         return Results.NotFound(response);
@@ -109,9 +116,9 @@ app.MapDelete("/students/{id}", async (IRepository<Student> studentsRepo, int id
 }).Produces(StatusCodes.Status204NoContent)
     .WithTags("Delete");
 
-app.MapGet("/students/pagination", async (IRepository<Student> studentsRepo, HttpRequest request) =>
+app.MapGet("/students/pagination", async (IStudentService studentService, HttpRequest request) =>
 {
-    return await studentsRepo.GetPaged(request);
+    return await studentService.GetByPageFilter(request);
 });
 
 app.Run();
