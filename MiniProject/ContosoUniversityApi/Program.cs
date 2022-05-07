@@ -4,8 +4,8 @@ using ContosoUniversityApi.Models;
 using ContosoUniversityApi.Repositories;
 using ContosoUniversityApi.Services;
 using ContosoUniversityApi.Wrapper;
-using Microsoft.AspNetCore.Http.Json;
 using Microsoft.EntityFrameworkCore;
+using HttpJson = Microsoft.AspNetCore.Http.Json;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -19,7 +19,7 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 // Set the JSON serializer options
-builder.Services.Configure<JsonOptions>(options =>
+builder.Services.Configure<HttpJson.JsonOptions>(options =>
 {
     options.SerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles;
 });
